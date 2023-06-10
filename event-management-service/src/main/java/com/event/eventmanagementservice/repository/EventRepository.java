@@ -2,6 +2,7 @@ package com.event.eventmanagementservice.repository;
 
 
 import com.event.eventmanagementservice.entity.Event;
+import org.apache.kafka.common.protocol.types.Field;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -9,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,4 +24,13 @@ public interface EventRepository extends JpaRepository<Event, String> {
 
 	@Query(value = "select * from events where events.organizator_username = :username", nativeQuery = true)
 	Page<Event> findByUsername(Pageable pageable,  @Param("username") String username);
+
+	@Query(value = "select * FROM events WHERE events.name LIKE %:searchKey% AND events.startDate > :currentDate", nativeQuery = true)
+	Page<Event> findCurrentEventsBySearchKey(@Param("searchKey") String searchKey, @Param("currentDate") LocalDateTime currentDate, Pageable pageable);
+
+	List<Event> findByOrganizatorUsername(String organizatorUsername);
+
+	List<Event> findByIdInAndStartDateBefore(List<String> ids, LocalDateTime startDate);
+
+
 }

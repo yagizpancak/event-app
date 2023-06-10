@@ -20,6 +20,7 @@ public class EventResponse {
 	private LocalDateTime registerDueDate;
 	private Integer userLimit;
 	private String organizatorUsername;
+	private String imageUrl;
 
 	public static EventResponse fromEntity(Event event){
 		return EventResponse.builder()
@@ -32,6 +33,7 @@ public class EventResponse {
 				.registerDueDate(event.getRegisterDueDate())
 				.userLimit(event.getUserLimit())
 				.organizatorUsername(event.getOrganizatorUsername())
+				.imageUrl("/api/v1/event-management/event-img/" + event.getId())
 				.build();
 	}
 }
