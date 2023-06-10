@@ -35,4 +35,4 @@ eureka:
 
 events:
   image:
-    path: C:/Users/pc/Desktop/bitirmeKod/eventsImg
+    path: C:/Users/Yagizcan/Desktop/event-app/img/profile

@@ -92,6 +92,8 @@ services:
       - discovery-server
       - api-gateway
       - broker
+    volumes:
+      - eventImg:/img/event
 
   user-service:
     container_name: user-service
@@ -131,3 +133,4 @@ services:
 
 volumes:
   userImg:
+  eventImg:

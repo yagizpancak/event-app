@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @ControllerAdvice
 public class ApplicationExceptionHandler {
@@ -26,6 +27,16 @@ public class ApplicationExceptionHandler {
                 .failReason(ex.getMessage())
                 .build();
         return ResponseEntity.status(HttpStatus.NO_CONTENT)
+                .body(resBody);
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<GenericBadRequestResponse> handleFileSizeException(MaxUploadSizeExceededException ex){
+        GenericBadRequestResponse resBody = GenericBadRequestResponse.builder()
+                .isSuccess(false)
+                .failReason(ex.getMessage())
+                .build();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(resBody);
     }
 }

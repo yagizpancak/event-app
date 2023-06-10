@@ -125,6 +125,7 @@ public class UserService {
         var profile = user.getProfile();
         String filePath = profile.getProfilePhotoPath();
         //FIXME null file
+
         byte[] imageInByte = Files.readAllBytes(new File(filePath).toPath());
         return imageInByte;
     }
