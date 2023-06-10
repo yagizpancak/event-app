@@ -43,4 +43,7 @@ public class Event {
 
 	@Column(name = "organizator_username")
 	private String organizatorUsername;
+
+	@Column(name = "image_path")
+	private String imagePath;
 }

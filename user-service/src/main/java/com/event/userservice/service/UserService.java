@@ -17,6 +17,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.List;
 
 
 @Service
@@ -64,7 +65,8 @@ public class UserService {
     }
 
     public LoginResponse login(LoginRequest loginRequest) throws GenericBadRequestException {
-        var user = userRepository.findByUsername(loginRequest.getUsername()).orElseThrow(() -> new GenericBadRequestException("User not found"));
+        var user = userRepository.findByUsername(loginRequest.getUsername())
+                .orElseThrow(()-> new GenericBadRequestException("There is no user with this username: " + loginRequest.getUsername()));
         var isProfileExists = user.getProfile() != null;
 
         if(user.getPassword().equals(loginRequest.getPassword())){
@@ -81,17 +83,20 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public FollowerResponse getFollowers(String username){
-        return FollowerResponse.fromApplicationUser(userRepository.findByUsername(username).get());
+    public FollowerResponse getFollowers(String username) throws GenericBadRequestException {
+        return FollowerResponse.fromApplicationUser(userRepository.findByUsername(username)
+                .orElseThrow(()-> new GenericBadRequestException("There is no user with this username: " + username)));
     }
 
     @Transactional(readOnly = true)
-    public FollowingResponse getFollowees(String username){
-        return FollowingResponse.fromApplicationUser(userRepository.findByUsername(username).get());
+    public FollowingResponse getFollowees(String username) throws GenericBadRequestException {
+        return FollowingResponse.fromApplicationUser(userRepository.findByUsername(username)
+                .orElseThrow(()-> new GenericBadRequestException("There is no user with this username: " + username)));
     }
 
-    public void addProfileInfo(Profile profile, String username) {
-        var user = userRepository.findByUsername(username).get();
+    public void addProfileInfo(Profile profile, String username) throws GenericBadRequestException {
+        var user = userRepository.findByUsername(username)
+                        .orElseThrow(()-> new GenericBadRequestException("There is no user with this username: " + username));
         user.setProfile(profile);
         userRepository.save(user);
     }
@@ -128,5 +133,44 @@ public class UserService {
     public boolean checkIfProfileExists(String username) throws GenericBadRequestException {
         var user = userRepository.findByUsername(username).orElseThrow(() -> new GenericBadRequestException("User not found"));
         return user.getProfile() != null;
+    }
+
+    @Transactional(readOnly = true)
+    public ApplicationUserRestrictedResponse getUserInfo(String username) throws GenericBadRequestException {
+        var user = userRepository.findByUsername(username).orElseThrow(() -> new GenericBadRequestException("User not found"));
+        return ApplicationUserRestrictedResponse.fromApplicationUser(user);
+    }
+
+    public ApplicationUsersRestrictedResponse getUsersInfo(ApplicationUsersRestrictedInfoRequest restrictedInfoRequest) {
+        List<ApplicationUserRestrictedResponse> responses = userRepository.findByUsernameIn(restrictedInfoRequest.getUsernames())
+                .stream()
+                .map(ApplicationUserRestrictedResponse::fromApplicationUser)
+                .toList();
+        return ApplicationUsersRestrictedResponse.builder()
+                .usersInfo(responses)
+                .build();
+    }
+
+    public ApplicationUsersRestrictedResponse getUsersByKeyword(String keyword) {
+        var users = userRepository.findByNameContainingIgnoreCase(keyword);
+        var responses = users.stream()
+                .map(ApplicationUserRestrictedResponse::fromApplicationUser)
+                .toList();
+        return ApplicationUsersRestrictedResponse.builder()
+                .usersInfo(responses)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public FollowFollowingCountResponse getFollowerAndFollowingCount(String username) throws GenericBadRequestException {
+        var user = userRepository
+                .findByUsername(username)
+                .orElseThrow(
+                        ()->new GenericBadRequestException("There is no user found with the username of : " + username)
+                );
+        return FollowFollowingCountResponse.builder()
+                .followerCount(user.getFollowers().size())
+                .followingCount(user.getFollowing().size())
+                .build();
     }
 }

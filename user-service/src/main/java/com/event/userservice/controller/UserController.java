@@ -43,18 +43,18 @@ public class UserController {
     }
 
     @GetMapping("/follower-list/{username}")
-    public FollowerResponse getFollowerList(@PathVariable String username){
+    public FollowerResponse getFollowerList(@PathVariable String username) throws GenericBadRequestException {
         return userService.getFollowers(username);
     }
 
     @GetMapping("/following-list/{username}")
-    public FollowingResponse getFollowingList(@PathVariable String username){
+    public FollowingResponse getFollowingList(@PathVariable String username) throws GenericBadRequestException {
         return userService.getFollowees(username);
     }
 
 
     @PostMapping("/profile/{username}")
-    public AddProfileInfoResponse addProfileInfo(@Valid @RequestBody ProfileRequest profileRequest, @PathVariable String username){
+    public AddProfileInfoResponse addProfileInfo(@Valid @RequestBody ProfileRequest profileRequest, @PathVariable String username) throws GenericBadRequestException {
         userService.addProfileInfo(modelMapper.map(profileRequest, Profile.class), username);
         return AddProfileInfoResponse.builder()
                 .isSuccess(true)
@@ -87,6 +87,26 @@ public class UserController {
         return ProfileCheckResponse.builder()
                 .isProfileExists(userService.checkIfProfileExists(username))
                 .build();
+    }
+
+    @GetMapping("/{username}")
+    public ApplicationUserRestrictedResponse getUserInfo(@PathVariable String username) throws GenericBadRequestException {
+        return userService.getUserInfo(username);
+    }
+
+    @PostMapping("/users-info-restricted/all")
+    public ApplicationUsersRestrictedResponse getUsersInfo(@RequestBody ApplicationUsersRestrictedInfoRequest restrictedInfoRequest){
+        return userService.getUsersInfo(restrictedInfoRequest);
+    }
+
+    @GetMapping("/search-user/{keyword}")
+    public ApplicationUsersRestrictedResponse getUsersByKeyword(@PathVariable String keyword){
+        return userService.getUsersByKeyword(keyword);
+    }
+
+    @GetMapping("/get-follow-follower-count/{username}")
+    public FollowFollowingCountResponse getFollowerAndFollowingCount(@PathVariable String username) throws GenericBadRequestException {
+        return userService.getFollowerAndFollowingCount(username);
     }
 
 
