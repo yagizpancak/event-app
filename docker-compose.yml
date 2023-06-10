@@ -104,6 +104,8 @@ services:
       - discovery-server
       - api-gateway
       - broker
+    volumes:
+      - userImg:/img/profile
 
   event-feed-service:
     container_name: event-feed-service
@@ -126,3 +128,6 @@ services:
       - discovery-server
       - api-gateway
       - broker
+
+volumes:
+  userImg:
