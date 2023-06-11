@@ -24,9 +24,15 @@ spring:
           json:
             type:
               mapping: created_event:com.event.eventmanagementservice.topic.CreatedEvents
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
 
 server:
   port: 0
+  tomcat:
+    max-swallow-size: -1
 
 eureka:
   client:
@@ -35,4 +41,5 @@ eureka:
 
 events:
   image:
-    path: C:/Users/Yagizcan/Desktop/event-app/img/profile
+    path: C:/Users/Yagizcan/Desktop/event-app/img/event
+

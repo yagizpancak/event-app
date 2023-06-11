@@ -1,9 +1,7 @@
 package com.event.eventfeed.api;
 
 
-import com.event.eventfeed.dto.FeedRequest;
-import com.event.eventfeed.dto.FeedResponse;
-import com.event.eventfeed.model.Feed;
+import com.event.eventfeed.dto.EventsInfoRestricted;
 import com.event.eventfeed.service.EventFeedService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -19,12 +17,10 @@ public class EventFeedController {
 
     private final EventFeedService service;
     private final ModelMapper modelMapper;
-
+    //TODO follow KAfka event get followee events
     @GetMapping("/{username}")
-    public ResponseEntity<FeedResponse> getUserFeed(@PathVariable String username){
-        return ResponseEntity.ok().body(FeedResponse.builder()
-                        .events(service.getFeed(username))
-                        .build());
+    public ResponseEntity<EventsInfoRestricted> getUserFeed(@PathVariable String username){
+        return ResponseEntity.ok().body(service.getFeed(username));
     }
 
     @GetMapping("/test/{username}")

@@ -9,12 +9,10 @@ import com.event.eventregistration.model.request.AnswerRegistrationRequest;
 import com.event.eventregistration.model.request.EventInfoAddRequest;
 import com.event.eventregistration.model.request.RegistrationAddRequest;
 import com.event.eventregistration.model.response.EventInfoResponse;
-import com.event.eventregistration.model.response.RegisteredEventsWithStatusResponse;
 import com.event.eventregistration.model.response.RegistrationInfoWithStatus;
 import com.event.eventregistration.repository.RegistrationRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.aggregation.*;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -120,28 +118,28 @@ public class EventRegistrationService {
 				.toList();
 	}
 
-	/*
-		public List<RegistrationInfoWithStatus> getEventsThatAUserMadeRegistrationRequest(String username) {
-			List<EventInfo> eventInfos = mongoTemplate.find(
-					Query.query(Criteria.where("users.username").is(username)),
-					EventInfo.class);
-			List<RegistrationInfoWithStatus> registrationsWithStatus = new ArrayList<>();
-			for(EventInfo eventInfo : eventInfos){
-				for(Registration registration : eventInfo.getUsers()){
-					if(registration.getUsername().equals(username)){
-						registrationsWithStatus.add(RegistrationInfoWithStatus.builder()
-								.eventUUID(eventInfo.getId())
-								.registrationStatus(registration.getStatus())
-								.build());
-					}
-				}
-			}
-			return registrationsWithStatus;
-		 }
-	*/
 
 	public List<RegistrationInfoWithStatus> getEventsThatAUserMadeRegistrationRequest(String username) {
-		MatchOperation matchUser = Aggregation.match(Criteria.where("users.username").is(username));
+		List<EventInfo> eventInfos = mongoTemplate.find(
+				Query.query(Criteria.where("users.username").is(username)),
+				EventInfo.class);
+		List<RegistrationInfoWithStatus> registrationsWithStatus = new ArrayList<>();
+		for(EventInfo eventInfo : eventInfos){
+			for(Registration registration : eventInfo.getUsers()){
+				if(registration.getUsername().equals(username)){
+					registrationsWithStatus.add(RegistrationInfoWithStatus.builder()
+							.eventUUID(eventInfo.getId())
+							.registrationStatus(registration.getStatus())
+							.build());
+				}
+			}
+		}
+		return registrationsWithStatus;
+	 }
+	/*
+
+	public List<RegistrationInfoWithStatus> getEventsThatAUserMadeRegistrationRequest(String username) {
+		MatchOperation matchUser = Aggregation.match(Criteria.where("organizator_username").is(username));
 		UnwindOperation unwindUsers = Aggregation.unwind("users");
 		MatchOperation matchUsername = Aggregation.match(Criteria.where("users.username").is(username));
 		ProjectionOperation projectFields = Aggregation.project("id", "users.status")
@@ -156,7 +154,7 @@ public class EventRegistrationService {
 						.getMappedResults();
 		return registrationResponses;
 	}
-
+*/
 
 
 }

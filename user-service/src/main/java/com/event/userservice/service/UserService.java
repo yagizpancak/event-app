@@ -153,7 +153,7 @@ public class UserService {
     }
 
     public ApplicationUsersRestrictedResponse getUsersByKeyword(String keyword) {
-        var users = userRepository.findByNameContainingIgnoreCase(keyword);
+        var users = userRepository.findByUsernameContainingIgnoreCase(keyword);
         var responses = users.stream()
                 .map(ApplicationUserRestrictedResponse::fromApplicationUser)
                 .toList();

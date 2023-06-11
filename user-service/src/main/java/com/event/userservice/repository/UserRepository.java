@@ -13,5 +13,5 @@ public interface UserRepository extends JpaRepository<ApplicationUsers , Integer
     @Transactional
     List<ApplicationUsers> findByUsernameIn(List<String> usernames);
     @Transactional
-    List<ApplicationUsers> findByNameContainingIgnoreCase(String username);
+    List<ApplicationUsers> findByUsernameContainingIgnoreCase(String username);
 }

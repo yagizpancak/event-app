@@ -29,6 +29,7 @@ public class Event {
 	@Column(name = "location_y")
 	private String locationY;
 
+	//FIXME LOB yap
 	@Column(name = "description")
 	private String description;
 

@@ -3,7 +3,6 @@ package com.event.eventmanagementservice.controller;
 import com.event.eventmanagementservice.model.request.EventAddRequest;
 import com.event.eventmanagementservice.model.request.GetEventsRequest;
 import com.event.eventmanagementservice.model.response.EventResponse;
-import com.event.eventmanagementservice.model.response.EventResponseRestrictedWithDueInfo;
 import com.event.eventmanagementservice.model.response.EventsInfoRestricted;
 import com.event.eventmanagementservice.model.response.EventsInfoRestrictedWithDueInfo;
 import com.event.eventmanagementservice.service.EventManagementService;
@@ -41,13 +40,13 @@ public class EventManagementController {
 	}
 
 	// getting current event information (not closed) from a list of uuids
-	@GetMapping("/get-current-events/from-uuid-list")
+	@PostMapping("/get-current-events/from-uuid-list")
 	public EventsInfoRestricted getCurrentEventsInformation(@RequestBody GetEventsRequest getEventsRequest){
 		return eventManagementService.getCurrentEventsInformation(getEventsRequest);
 	}
 
 	// getting the image of the event by its uuid
-	@GetMapping("/api/v1/event-management/get-event-image/{eventUUID}")
+	@GetMapping("/get-event-image/{eventUUID}")
 	public ResponseEntity<?> getEventImage(@PathVariable String eventUUID) throws IOException {
 		byte[] imgData = eventManagementService.getEventImage(eventUUID);
 		return ResponseEntity.status(HttpStatus.OK)

@@ -13,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.util.TypeCollector;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -39,7 +38,7 @@ public class EventManagementService {
 		LocalDateTime currentDate = LocalDateTime.now(ZoneId.of ( "Europe/Istanbul" ));
 		var eventResponseList = eventRepository.findByOrganizatorUsername(organizatorUsername).stream()
 				.map(event -> {
-					boolean isClosed = currentDate.isBefore(event.getStartDate());
+					boolean isClosed = currentDate.isAfter(event.getStartDate());
 					return EventResponseRestrictedWithDueInfo.fromEvent(event, isClosed);
 				}).toList();
 		return EventsInfoRestrictedWithDueInfo.builder()
@@ -92,7 +91,7 @@ public class EventManagementService {
     }
 
 	public EventsInfoRestricted getCurrentEventsInformation(GetEventsRequest getEventsRequest) {
-		var eventResponseList = eventRepository.findByIdInAndStartDateBefore(getEventsRequest.getIdList(), LocalDateTime.now(ZoneId.of ( "Europe/Istanbul" )))
+		var eventResponseList = eventRepository.findByIdInAndStartDateAfter(getEventsRequest.getIdList(), LocalDateTime.now(ZoneId.of ( "Europe/Istanbul" )))
 				.stream()
 				.map(EventResponseRestricted::fromEvent)
 				.toList();
