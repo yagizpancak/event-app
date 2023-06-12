@@ -23,6 +23,7 @@ public interface EventRepository extends JpaRepository<Event, String> {
 	@Query(value = "select * from events where events.organizator_username = :username", nativeQuery = true)
 	Page<Event> findByUsername(Pageable pageable,  @Param("username") String username);
 
+
 	@Query(value = "SELECT * FROM events WHERE LOWER(events.name) LIKE LOWER(CONCAT('%', :searchKey, '%')) AND events.start_date > :currentDate", nativeQuery=true)
 	Page<Event> findCurrentEventsBySearchKey(@Param("searchKey") String searchKey, @Param("currentDate") LocalDateTime currentDate, Pageable pageable);
 

@@ -19,13 +19,13 @@ public class EventRegistrationController {
 		return eventRegistrationService.getEventRegistration(id);
 	}
 
+
 	// getting the waiting registration number for an event
 	@GetMapping("/registered-users-count/waiting/{eventUUID}")
 	public SimpleCountResponse getRegistrationCountOfEvent(@PathVariable String eventUUID){
 		return SimpleCountResponse.builder()
 				.count(eventRegistrationService.getRegistrationCountOfEvent(eventUUID))
-				.build();
-	}
+
 
 	// getting registered users for an event (only accepted)
 	@GetMapping("/registered-users/{eventUUID}")

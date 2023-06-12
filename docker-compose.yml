@@ -73,9 +73,9 @@ services:
     image: yagizpancak/api-gateway:latest
     container_name: api-gateway
     ports:
-      - "8080:8080"
+      - "8443:8443"
     expose:
-      - "8080"
+      - "8443"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     depends_on:
