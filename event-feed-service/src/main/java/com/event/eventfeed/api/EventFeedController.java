@@ -7,7 +7,6 @@ import com.event.eventfeed.dto.SimpleIsSuccessResponse;
 import com.event.eventfeed.exception.UserNotFoundException;
 import com.event.eventfeed.service.EventFeedService;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,8 +18,6 @@ import java.util.List;
 public class EventFeedController {
 
     private final EventFeedService service;
-    private final ModelMapper modelMapper;
-    //TODO follow KAfka event get followee events
     @GetMapping("/{username}")
     public ResponseEntity<EventsInfoRestricted> getUserFeed(@PathVariable String username){
         return ResponseEntity.ok().body(service.getFeed(username));

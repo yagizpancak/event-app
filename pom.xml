@@ -20,6 +20,7 @@
         <module>api-gateway</module>
         <module>user-service</module>
         <module>event-feed-service</module>
+        <module>post-service</module>
     </modules>
 
     <properties>

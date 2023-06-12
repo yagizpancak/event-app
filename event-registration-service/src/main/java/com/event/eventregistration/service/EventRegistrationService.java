@@ -246,6 +246,9 @@ public class EventRegistrationService {
 				Query.query(Criteria.where("id").is(eventUUID)
 						.and("users.status").is(RegistrationStatus.WAITING)),
 				EventInfo.class);
+		if (eventsInfo.size() < 1){
+			return 0;
+		}
 		return eventsInfo.get(0).getUsers().size();
 	}
 

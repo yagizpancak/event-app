@@ -131,6 +131,17 @@ services:
       - api-gateway
       - broker
 
+  post-service:
+    container_name: post-service
+    image: yagizpancak/post-service:latest
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      - mongo
+      - discovery-server
+      - api-gateway
+      - broker
+
 volumes:
   userImg:
   eventImg:
