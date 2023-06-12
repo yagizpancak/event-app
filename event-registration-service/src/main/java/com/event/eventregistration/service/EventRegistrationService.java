@@ -45,7 +45,7 @@ public class EventRegistrationService {
 		EventInfo eventInfo = registrationRepository.findById(eventUUID).orElse(null);
 		if (eventInfo == null){
 			return ApplicationUsersRestrictedResponse.builder()
-					.users(new ArrayList<>())
+					.usersInfo(new ArrayList<>())
 					.build();
 		}
 
@@ -80,9 +80,9 @@ public class EventRegistrationService {
 
 		Registration registration = fromRequest(registrationAddRequest);
 		eventInfo.getUsers().add(registration);
-		registrationRepository.insert(eventInfo);
+		registrationRepository.save(eventInfo);
 		// delete from the feed
-		SimpleIsSuccessResponse response = webClientBuilder.build().post()
+		SimpleIsSuccessResponse response = webClientBuilder.build().put()
 				.uri(uriBuilder -> uriBuilder
 						.scheme("http")
 						.host("event-feed-service")
@@ -90,7 +90,7 @@ public class EventRegistrationService {
 						.build())
 				.body(BodyInserters.fromValue(RemoveEventFromFeedRequest.builder()
 						.uuid(eventInfo.getId())
-						.username(registrationAddRequest.getUsername())))
+						.username(registrationAddRequest.getUsername()).build()))
 				.retrieve()
 				.bodyToMono(SimpleIsSuccessResponse.class)
 				.block();
@@ -144,14 +144,31 @@ public class EventRegistrationService {
 
 	public EventsInfoRestricted getEventsThatAUserRegistered(String username, boolean isClosedOption) {
 		List<EventInfo> eventsInfo = mongoTemplate.find(
+				Query.query(Criteria.where("users.username").is(username)),
+				EventInfo.class);
+		List<EventInfo> acceptedEventsInfo = new ArrayList<>();
+		for(EventInfo eventInfoToken : eventsInfo){
+			var registrationList = eventInfoToken.getUsers();
+			for (Iterator<Registration> it = registrationList.iterator(); it.hasNext(); ) {
+				Registration registration = it.next();
+				if(registration.getUsername().equals(username) && registration.getStatus() == RegistrationStatus.ACCEPTED){
+					acceptedEventsInfo.add(eventInfoToken);
+				}
+
+			}
+		}
+		List<String> eventUuids =  acceptedEventsInfo.stream()
+				.map(EventInfo::getId)
+				.toList();
+		/*List<EventInfo> eventsInfo = mongoTemplate.find(
 				Query.query(Criteria.where("users.username").is(username)
 						.and("users.status").is(RegistrationStatus.ACCEPTED)),
 				EventInfo.class);
 
-		List<String> eventUuids =  eventsInfo.stream()
+		List<String> eventUuids =  eventsInfo.stream().filter(eventInfo -> eventInfo.getUsers())
 				.map(EventInfo::getId)
 				.toList();
-
+*/
 
 		final String closedEventsRequestPath = "/api/v1/event-management/get-closed-events/from-uuid-list";
 		final String currentEventsRequestPath = "/api/v1/event-management/get-current-events/from-uuid-list";
@@ -229,7 +246,7 @@ public class EventRegistrationService {
 				Query.query(Criteria.where("id").is(eventUUID)
 						.and("users.status").is(RegistrationStatus.WAITING)),
 				EventInfo.class);
-		return eventsInfo.size();
+		return eventsInfo.get(0).getUsers().size();
 	}
 
 

@@ -13,5 +13,5 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ApplicationUsersRestrictedResponse {
-    private List<ApplicationUserRestrictedResponse> users;
+    private List<ApplicationUserRestrictedResponse> usersInfo;
 }

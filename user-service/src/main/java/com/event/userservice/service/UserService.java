@@ -179,6 +179,7 @@ public class UserService {
     }
 
     // is user1 following user2 ?
+    @Transactional(readOnly = true)
     public boolean isFollowing(String user1, String user2) throws GenericBadRequestException {
         var user = userRepository
                 .findByUsername(user1)

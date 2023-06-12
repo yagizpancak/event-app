@@ -97,12 +97,12 @@ public class EventFeedService {
             }
         }
         feed.setFeedEvents(feedEventsUpdated);
-        mongoTemplate.insert(feed);
+        mongoTemplate.save(feed);
         return true;
     }
 
     @KafkaListener(topics = "followUser")
-    public void kafkaDeneme(KafkaTopic kafkaTopic) throws UserNotFoundException {
+    public void kafkaFollowUser(KafkaTopic kafkaTopic) throws UserNotFoundException {
         String follower = kafkaTopic.getFollower();
         String followee = kafkaTopic.getFollowee();
         var response = webClientBuilder.build().get()
@@ -119,12 +119,11 @@ public class EventFeedService {
                 map(EventResponseRestrictedWithDueInfo::getEventUUID).toList();
         var followerFeed = feedRepository.findByUsername(follower).orElseThrow(() ->new UserNotFoundException("User not found with this username"+ follower));
 
-        List<String> updatedEvents = new ArrayList<>();
-        List<String> oldEvents = followerFeed.getFeedEvents();
-        for (String newEvent: updatedEvents){
-            oldEvents.add(newEvent);
+        List<String> updatedEvents = followerFeed.getFeedEvents();
+        for (String newEvent: followeeEvents){
+            updatedEvents.add(newEvent);
         }
         followerFeed.setFeedEvents(updatedEvents);
-        feedRepository.insert(followerFeed);
+        feedRepository.save(followerFeed);
     }
 }
