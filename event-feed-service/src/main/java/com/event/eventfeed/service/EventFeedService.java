@@ -26,7 +26,6 @@ public class EventFeedService {
     private final MongoTemplate mongoTemplate;
     private final WebClient.Builder webClientBuilder;
 
-    //FIXME Kafka ekle
     public EventsInfoRestricted getFeed(String username) {
         List<String> uuids = new ArrayList<>();
         feedRepository.findByUsername(username).ifPresent(feed ->{
@@ -50,14 +49,11 @@ public class EventFeedService {
 
     public List<String> getFeeds(String username){
         var feedOptional  = feedRepository.findByUsername(username);
-        if(feedOptional.isPresent()){
-            return feedOptional.get().getFeedEvents();
-        }
-        return null;
+        return feedOptional.map(Feed::getFeedEvents).orElse(null);
     }
 
     @KafkaListener(topics = "createdEvents")
-    public void addFeed(KafkaEventRequest kafkaEventRequest){
+    public void addFeed(KafkaTopic kafkaEventRequest){
         FollowerResponse followerResponse = webClientBuilder.build().get()
                 .uri(uriBuilder -> uriBuilder
                     .scheme("http")
@@ -71,6 +67,7 @@ public class EventFeedService {
         Query query = Query.query(Criteria.where("username").in(usernames));
         Update update = new Update().addToSet("feedEvents", kafkaEventRequest.getId());
         mongoTemplate.updateMulti(query, update, Feed.class);
+
     }
 
     public void addUser(String username) {
@@ -78,5 +75,12 @@ public class EventFeedService {
                     .username(username)
                     .feedEvents(new ArrayList<>())
                     .build());
+    }
+
+    @KafkaListener(topics = "followUser")
+    public void kafkaDeneme(KafkaTopic kafkaTopic){
+        //TODO
+        System.out.println(kafkaTopic.getFollower());
+        System.out.println(kafkaTopic.getFollowee());
     }
 }
