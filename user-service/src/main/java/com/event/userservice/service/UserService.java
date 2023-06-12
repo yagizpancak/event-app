@@ -174,4 +174,19 @@ public class UserService {
                 .followingCount(user.getFollowing().size())
                 .build();
     }
+
+    // is user1 following user2 ?
+    public boolean isFollowing(String user1, String user2) throws GenericBadRequestException {
+        var user = userRepository
+                .findByUsername(user1)
+                .orElseThrow(
+                        ()->new GenericBadRequestException("There is no user found with the username of : " + user1)
+                );
+        for(ApplicationUsers followee : user.getFollowing()){
+            if(followee.getUsername().equals(user2)){
+                return true;
+            }
+        }
+        return false;
+    }
 }

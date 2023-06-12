@@ -58,7 +58,7 @@ public class UserController {
         userService.addProfileInfo(modelMapper.map(profileRequest, Profile.class), username);
         return AddProfileInfoResponse.builder()
                 .isSuccess(true)
-                .addImgUrl("api/v1/users/profile-img/" + username)
+                .addImgUrl("/api/v1/users/profile-img/" + username)
                 .build();
     }
 
@@ -109,5 +109,12 @@ public class UserController {
         return userService.getFollowerAndFollowingCount(username);
     }
 
+    // if a user follows another user or not
+    @GetMapping("/is-follow/{follower}/{followee}")
+    public SimpleBooleanResponse isFollows(@PathVariable String follower, @PathVariable String followee) throws GenericBadRequestException {
+        return SimpleBooleanResponse.builder()
+                .isConditionTrue(userService.isFollowing(follower, followee))
+                .build();
+    }
 
 }

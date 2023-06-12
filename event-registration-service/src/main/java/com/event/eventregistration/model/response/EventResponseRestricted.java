@@ -1,4 +1,4 @@
-package com.event.eventfeed.dto;
+package com.event.eventregistration.model.response;
 
 
 import lombok.AllArgsConstructor;
@@ -17,6 +17,4 @@ public class EventResponseRestricted {
     private LocalDateTime startDate;
     private String uuid;
     private String imageUrl;
-
-
 }

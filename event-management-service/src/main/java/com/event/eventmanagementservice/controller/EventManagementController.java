@@ -54,6 +54,17 @@ public class EventManagementController {
 				.body(imgData);
 	}
 
+	// getting the event information (closed) from list of uuids
+	@PostMapping("/get-closed-events/from-uuid-list")
+	public EventsInfoRestricted getClosedEventsInformation(@RequestBody GetEventsRequest eventsRequest){
+		return eventManagementService.getClosedEventsInformation(eventsRequest);
+	}
+
+	@GetMapping("/get-random-events")
+	public EventsInfoRestricted getRandomEvents(){
+		return eventManagementService.getRandomEvents();
+	}
+
 
 	@PostMapping("/id")
 	public List<EventResponse> getEventsByIds(@RequestBody GetEventsRequest getEventsRequest){

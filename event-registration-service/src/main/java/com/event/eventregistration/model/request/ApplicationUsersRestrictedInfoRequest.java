@@ -1,4 +1,4 @@
-package com.event.eventmanagementservice.model.request;
+package com.event.eventregistration.model.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,8 +9,8 @@ import java.util.List;
 
 @Data
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
-public class GetEventsRequest {
-	private List<String> idList;
+@AllArgsConstructor
+public class ApplicationUsersRestrictedInfoRequest {
+    private List<String> usernames;
 }

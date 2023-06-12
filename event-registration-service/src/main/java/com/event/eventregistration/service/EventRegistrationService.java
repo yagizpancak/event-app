@@ -5,11 +5,8 @@ import com.event.eventregistration.entity.Registration;
 import com.event.eventregistration.entity.RegistrationStatus;
 import com.event.eventregistration.exception.BusinessException;
 import com.event.eventregistration.exception.ErrorCode;
-import com.event.eventregistration.model.request.AnswerRegistrationRequest;
-import com.event.eventregistration.model.request.EventInfoAddRequest;
-import com.event.eventregistration.model.request.RegistrationAddRequest;
-import com.event.eventregistration.model.response.EventInfoResponse;
-import com.event.eventregistration.model.response.RegistrationInfoWithStatus;
+import com.event.eventregistration.model.request.*;
+import com.event.eventregistration.model.response.*;
 import com.event.eventregistration.repository.RegistrationRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -18,10 +15,10 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.WebClient;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,6 +27,7 @@ import java.util.stream.Collectors;
 public class EventRegistrationService {
 	private final RegistrationRepository registrationRepository;
 	private final MongoTemplate mongoTemplate;
+	private final WebClient.Builder webClientBuilder;
 
 	public EventInfoResponse getEventRegistration(String id) {
 		EventInfo eventInfo = registrationRepository.findById(id)
@@ -43,23 +41,59 @@ public class EventRegistrationService {
 		return EventInfoResponse.fromEntity(eventInfo);
 	}
 
-	public List<String> getRegisteredUsersForAnEvent(String eventUUID){
+	public ApplicationUsersRestrictedResponse getRegisteredUsersForAnEvent(String eventUUID, RegistrationStatus statusCriteria){
 		EventInfo eventInfo = registrationRepository.findById(eventUUID).orElse(null);
-		if (eventInfo != null) {
-			return eventInfo.getUsers().stream()
-					.filter(registration -> registration.getStatus() == RegistrationStatus.ACCEPTED)
-					.map(Registration::getUsername)
-					.collect(Collectors.toList());
+		if (eventInfo == null){
+			return ApplicationUsersRestrictedResponse.builder()
+					.users(new ArrayList<>())
+					.build();
 		}
-		return Collections.emptyList();
+
+		var users =  eventInfo.getUsers().stream()
+				.filter(registration -> registration.getStatus() == statusCriteria)
+				.map(Registration::getUsername)
+				.collect(Collectors.toList());
+
+		// get user information as list
+		var usersInfo = webClientBuilder.build().post()
+				.uri(uriBuilder -> uriBuilder
+						.scheme("http")
+						.host("user-service")
+						.path("/api/v1/users/users-info-restricted/all")
+						.build())
+				.body(BodyInserters.fromValue(ApplicationUsersRestrictedInfoRequest.builder()
+						.usernames(users)
+						.build()))
+				.retrieve()
+				.bodyToMono(ApplicationUsersRestrictedResponse.class)
+				.block();
+
+		return usersInfo;
+
+
 	}
 
+	@Transactional
 	public EventInfoResponse addRegistration(RegistrationAddRequest registrationAddRequest) {
 		EventInfo eventInfo = registrationRepository.findById(registrationAddRequest.getEventId())
 				.orElseThrow(() -> new BusinessException("Event not found.", ErrorCode.resource_missing));
+
 		Registration registration = fromRequest(registrationAddRequest);
 		eventInfo.getUsers().add(registration);
-		registrationRepository.save(eventInfo);
+		registrationRepository.insert(eventInfo);
+		// delete from the feed
+		SimpleIsSuccessResponse response = webClientBuilder.build().post()
+				.uri(uriBuilder -> uriBuilder
+						.scheme("http")
+						.host("event-feed-service")
+						.path("/api/v1/event-feed/remove-event-from-feed")
+						.build())
+				.body(BodyInserters.fromValue(RemoveEventFromFeedRequest.builder()
+						.uuid(eventInfo.getId())
+						.username(registrationAddRequest.getUsername())))
+				.retrieve()
+				.bodyToMono(SimpleIsSuccessResponse.class)
+				.block();
 		return EventInfoResponse.fromEntity(eventInfo);
 	}
 
@@ -108,34 +142,97 @@ public class EventRegistrationService {
 
 
 
-	public List<String> getEventsThatAUserRegistered(String username) {
-		List<EventInfo> eventInfos = mongoTemplate.find(
+	public EventsInfoRestricted getEventsThatAUserRegistered(String username, boolean isClosedOption) {
+		List<EventInfo> eventsInfo = mongoTemplate.find(
 				Query.query(Criteria.where("users.username").is(username)
 						.and("users.status").is(RegistrationStatus.ACCEPTED)),
 				EventInfo.class);
-		return eventInfos.stream()
+
+		List<String> eventUuids =  eventsInfo.stream()
 				.map(EventInfo::getId)
 				.toList();
+
+
+		final String closedEventsRequestPath = "/api/v1/event-management/get-closed-events/from-uuid-list";
+		final String currentEventsRequestPath = "/api/v1/event-management/get-current-events/from-uuid-list";
+
+		// get information of events inside the events that user has registered to
+		var eventsInfoFiltered = webClientBuilder.build().post()
+				.uri(uriBuilder -> uriBuilder
+						.scheme("http")
+						.host("event-management-service")
+						.path(isClosedOption ? closedEventsRequestPath : currentEventsRequestPath)
+						.build())
+				.body(BodyInserters.fromValue(GetEventsRequest.builder()
+						.idList(eventUuids)
+						.build()))
+				.retrieve()
+				.bodyToMono(EventsInfoRestricted.class)
+				.block();
+
+		return eventsInfoFiltered;
 	}
 
 
 	public List<RegistrationInfoWithStatus> getEventsThatAUserMadeRegistrationRequest(String username) {
+		// get all the events the user is registered to
 		List<EventInfo> eventInfos = mongoTemplate.find(
 				Query.query(Criteria.where("users.username").is(username)),
 				EventInfo.class);
-		List<RegistrationInfoWithStatus> registrationsWithStatus = new ArrayList<>();
+
+		List<String> uuids = eventInfos.stream().map(EventInfo::getId).toList();
+
+		// get information of current events inside the events that user has registered to
+		var currentEventsInfo = webClientBuilder.build().post()
+				.uri(uriBuilder -> uriBuilder
+						.scheme("http")
+						.host("event-management-service")
+						.path("/api/v1/event-management/get-current-events/from-uuid-list")
+						.build())
+				.body(BodyInserters.fromValue(GetEventsRequest.builder()
+						.idList(uuids)
+						.build()))
+				.retrieve()
+				.bodyToMono(EventsInfoRestricted.class)
+				.block();
+
+		var currentEventsResponseList = currentEventsInfo.getEvents();
+
+
+		// obtain the registration status and event uuid's
+		Map<String, RegistrationStatus> registrationStatusMap = new HashMap<>();
 		for(EventInfo eventInfo : eventInfos){
 			for(Registration registration : eventInfo.getUsers()){
 				if(registration.getUsername().equals(username)){
-					registrationsWithStatus.add(RegistrationInfoWithStatus.builder()
-							.eventUUID(eventInfo.getId())
-							.registrationStatus(registration.getStatus())
-							.build());
+					registrationStatusMap.put(eventInfo.getId(), registration.getStatus());
 				}
 			}
 		}
+
+        // merge two info
+		List<RegistrationInfoWithStatus> registrationsWithStatus = new ArrayList<>();
+		for(var currentEventResponse : currentEventsResponseList){
+			var registrationInfoWithStatus = RegistrationInfoWithStatus.builder()
+					.event(currentEventResponse)
+					.registrationStatus(registrationStatusMap.get(currentEventResponse.getUuid()))
+					.build();
+			registrationsWithStatus.add(registrationInfoWithStatus);
+		}
+
+
 		return registrationsWithStatus;
 	 }
+
+
+	public int getRegistrationCountOfEvent(String eventUUID) {
+		List<EventInfo> eventsInfo = mongoTemplate.find(
+				Query.query(Criteria.where("id").is(eventUUID)
+						.and("users.status").is(RegistrationStatus.WAITING)),
+				EventInfo.class);
+		return eventsInfo.size();
+	}
+
+
 	/*
 
 	public List<RegistrationInfoWithStatus> getEventsThatAUserMadeRegistrationRequest(String username) {

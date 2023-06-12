@@ -16,12 +16,14 @@ import java.time.LocalDateTime;
 public class EventResponseRestricted {
     private String name;
     private LocalDateTime startDate;
+    private String uuid;
     private String imageUrl;
 
     public static EventResponseRestricted fromEvent(Event event){
         return EventResponseRestricted.builder()
                 .name(event.getName())
                 .startDate(event.getStartDate())
+                .uuid(event.getId())
                 .imageUrl("/api/v1/event-management/get-event-image/" + event.getId())
                 .build();
     }

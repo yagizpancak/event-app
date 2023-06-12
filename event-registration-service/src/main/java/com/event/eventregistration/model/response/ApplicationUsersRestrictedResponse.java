@@ -12,6 +12,6 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class RegisteredUsersResponse {
-    private List<ApplicationUserRestrictedResponse> registeredUsers;
+public class ApplicationUsersRestrictedResponse {
+    private List<ApplicationUserRestrictedResponse> users;
 }

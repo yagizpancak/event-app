@@ -80,7 +80,7 @@ public class EventManagementService {
 		event.setRegisterDueDate(eventAddRequest.getRegisterDueDate());
 		event.setUserLimit(eventAddRequest.getUserLimit());
 		event.setOrganizatorUsername(eventAddRequest.getOrganizatorUsername());
-		event.setImagePath(EVENTS_IMAGE_PATH + "/" + event.getId());
+		event.setImagePath(null);
 
 		return event;
 	}
@@ -117,5 +117,35 @@ public class EventManagementService {
 				.orElseThrow(() -> new BusinessException("Event not found.", ErrorCode.resource_missing));
 		event.setImagePath(absoluteImgPath);
 		eventRepository.save(event);
+	}
+
+	public EventsInfoRestricted getClosedEventsInformation(GetEventsRequest eventsRequest) {
+		List<Event> closedEvents = eventRepository
+				.findByIdInAndStartDateBefore(
+						eventsRequest.getIdList(),
+						LocalDateTime.now(ZoneId.of ( "Europe/Istanbul" ))
+				);
+		var eventResponses = closedEvents.stream()
+				.map(EventResponseRestricted::fromEvent).toList();
+
+		return EventsInfoRestricted.builder()
+				.events(eventResponses)
+				.build();
+
+	}
+
+
+	public EventsInfoRestricted getRandomEvents(){
+		var events = eventRepository
+				.findByStartDateAfterOrderByStartDateAsc(LocalDateTime.now(ZoneId.of ( "Europe/Istanbul" )));
+		if(events.size() > 10){
+			events = events.subList(0,10);
+		}
+
+		return EventsInfoRestricted.builder()
+				.events(events.stream().map(EventResponseRestricted::fromEvent).toList())
+				.build();
+
+
 	}
 }

@@ -12,6 +12,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RegistrationInfoWithStatus {
-    private String eventUUID;
+    private EventResponseRestricted event;
     private RegistrationStatus registrationStatus;
 }
