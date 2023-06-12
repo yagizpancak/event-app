@@ -24,7 +24,7 @@ public class EventRegistrationController {
 	@GetMapping("/registered-users/{eventUUID}")
 	public RegisteredUsersResponse getRegisteredUsersForAnEvent(@PathVariable String eventUUID){
 		return RegisteredUsersResponse.builder()
-				.registeredUsers(eventRegistrationService.getRegisteredUsersForAnEvent(eventUUID))
+					.registeredUsers(eventRegistrationService.getRegisteredUsersForAnEvent(eventUUID))
 				.build();
 	}
 
