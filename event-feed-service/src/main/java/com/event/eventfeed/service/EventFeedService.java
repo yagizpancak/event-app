@@ -15,7 +15,6 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,38 +26,34 @@ public class EventFeedService {
     private final MongoTemplate mongoTemplate;
     private final WebClient.Builder webClientBuilder;
 
-    //FIXME Kafka ekle
-    public List<EventResponse> getFeed(String username) {
+    public EventsInfoRestricted getFeed(String username) {
         List<String> uuids = new ArrayList<>();
         feedRepository.findByUsername(username).ifPresent(feed ->{
              uuids.addAll(feed.getFeedEvents());
         });
-        EventResponse[] eventResponses = webClientBuilder.build().post()
+        EventsInfoRestricted eventResponses = webClientBuilder.build().post()
                 .uri(uriBuilder -> uriBuilder
                         .scheme("http")
                         .host("event-management-service")
-                        .path("/api/v1/event-management/id")
+                        .path("/api/v1/event-management/get-current-events/from-uuid-list")
                         .build())
                 .body(BodyInserters.fromValue(GetEventsRequest.builder()
                                                 .idList(uuids)
                                                 .build()))
                 .retrieve()
-                .bodyToMono(EventResponse[].class)
+                .bodyToMono(EventsInfoRestricted.class)
                 .block();
 
-        return Arrays.stream(eventResponses).toList();
+        return eventResponses;
     }
 
     public List<String> getFeeds(String username){
         var feedOptional  = feedRepository.findByUsername(username);
-        if(feedOptional.isPresent()){
-            return feedOptional.get().getFeedEvents();
-        }
-        return null;
+        return feedOptional.map(Feed::getFeedEvents).orElse(null);
     }
 
     @KafkaListener(topics = "createdEvents")
-    public void addFeed(KafkaEventRequest kafkaEventRequest){
+    public void addFeed(KafkaTopic kafkaEventRequest){
         FollowerResponse followerResponse = webClientBuilder.build().get()
                 .uri(uriBuilder -> uriBuilder
                     .scheme("http")
@@ -72,6 +67,7 @@ public class EventFeedService {
         Query query = Query.query(Criteria.where("username").in(usernames));
         Update update = new Update().addToSet("feedEvents", kafkaEventRequest.getId());
         mongoTemplate.updateMulti(query, update, Feed.class);
+
     }
 
     public void addUser(String username) {
@@ -79,5 +75,12 @@ public class EventFeedService {
                     .username(username)
                     .feedEvents(new ArrayList<>())
                     .build());
+    }
+
+    @KafkaListener(topics = "followUser")
+    public void kafkaDeneme(KafkaTopic kafkaTopic){
+        //TODO
+        System.out.println(kafkaTopic.getFollower());
+        System.out.println(kafkaTopic.getFollowee());
     }
 }

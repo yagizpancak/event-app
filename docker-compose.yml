@@ -73,9 +73,9 @@ services:
     image: yagizpancak/api-gateway:latest
     container_name: api-gateway
     ports:
-      - "8080:8080"
+      - "8443:8443"
     expose:
-      - "8080"
+      - "8443"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     depends_on:
@@ -92,6 +92,8 @@ services:
       - discovery-server
       - api-gateway
       - broker
+    volumes:
+      - eventImg:/img/event
 
   user-service:
     container_name: user-service
@@ -104,6 +106,8 @@ services:
       - discovery-server
       - api-gateway
       - broker
+    volumes:
+      - userImg:/img/profile
 
   event-feed-service:
     container_name: event-feed-service
@@ -126,3 +130,7 @@ services:
       - discovery-server
       - api-gateway
       - broker
+
+volumes:
+  userImg:
+  eventImg:

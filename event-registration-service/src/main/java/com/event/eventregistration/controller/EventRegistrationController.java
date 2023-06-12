@@ -1,7 +1,6 @@
 package com.event.eventregistration.controller;
 
 import com.event.eventregistration.model.request.AnswerRegistrationRequest;
-import com.event.eventregistration.model.request.EventInfoAddRequest;
 import com.event.eventregistration.model.request.RegistrationAddRequest;
 import com.event.eventregistration.model.response.EventInfoResponse;
 import com.event.eventregistration.model.response.RegisteredEventsResponse;
@@ -36,7 +35,7 @@ public class EventRegistrationController {
 				.build();
 	}
 
-	@GetMapping("registered-events/all-status/{username}")
+	@GetMapping("/registered-events/all-status/{username}")
 	public RegisteredEventsWithStatusResponse getEventsThatAUserMadeRegistrationRequest(@PathVariable String username){
 		return RegisteredEventsWithStatusResponse.builder()
 				.eventsWithRegistrationResponses(eventRegistrationService.getEventsThatAUserMadeRegistrationRequest(username))

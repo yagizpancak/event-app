@@ -6,13 +6,13 @@ import com.event.userservice.exceptions.ProfileNotFoundException;
 import com.event.userservice.model.ApplicationUsers;
 import com.event.userservice.model.Profile;
 import com.event.userservice.repository.UserRepository;
+import com.event.userservice.topic.KafkaTopic;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.io.File;
@@ -24,13 +24,12 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class UserService {
-
+    private final KafkaTemplate<String, KafkaTopic> kafkaTemplate;
 
     @Value("${profile.img.path}")
     private String PROFILE_IMG_PATH;
 
     private final UserRepository userRepository;
-    private final KafkaTemplate<String, String> kafkaTemplate;
     private final WebClient.Builder webClientBuilder;
 
     @Transactional
@@ -42,6 +41,11 @@ public class UserService {
             userRepository.save(followerUser);
             userRepository.save(followeeUser);
         });
+        KafkaTopic kafkaTopic = KafkaTopic.builder()
+                                .follower(followerUsername)
+                                .followee(followeeUsername)
+                                .build();
+        kafkaTemplate.send("followUser", kafkaTopic);
     }
 
     public void addUser(ApplicationUserRequest userInfo){
@@ -60,8 +64,6 @@ public class UserService {
                 .bodyToMono(Boolean.class)
                 .block();
 
-        //FIXME Kafka
-        //kafkaTemplate.send("userSignup", userInfo.getUsername());
         userRepository.save(user);
     }
 
@@ -95,6 +97,7 @@ public class UserService {
                 .orElseThrow(()-> new GenericBadRequestException("There is no user with this username: " + username)));
     }
 
+    @Transactional
     public void addProfileInfo(Profile profile, String username) throws GenericBadRequestException {
         var user = userRepository.findByUsername(username)
                         .orElseThrow(()-> new GenericBadRequestException("There is no user with this username: " + username));
@@ -125,7 +128,7 @@ public class UserService {
         var user = userRepository.findByUsername(username).get();
         var profile = user.getProfile();
         String filePath = profile.getProfilePhotoPath();
-        //FIXME null file
+
         byte[] imageInByte = Files.readAllBytes(new File(filePath).toPath());
         return imageInByte;
     }
@@ -153,7 +156,7 @@ public class UserService {
     }
 
     public ApplicationUsersRestrictedResponse getUsersByKeyword(String keyword) {
-        var users = userRepository.findByNameContainingIgnoreCase(keyword);
+        var users = userRepository.findByUsernameContainingIgnoreCase(keyword);
         var responses = users.stream()
                 .map(ApplicationUserRestrictedResponse::fromApplicationUser)
                 .toList();
