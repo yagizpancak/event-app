@@ -249,7 +249,9 @@ public class EventRegistrationService {
 		if (eventsInfo.size() < 1){
 			return 0;
 		}
-		return eventsInfo.get(0).getUsers().size();
+		var waitingUsers = eventsInfo.get(0).getUsers().stream().filter(user -> user.getStatus() == RegistrationStatus.WAITING).toList();
+
+		return waitingUsers.size();
 	}
 
 
