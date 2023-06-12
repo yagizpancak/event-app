@@ -6,12 +6,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @Data
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
-public class RegisteredUsersResponse {
-    private List<ApplicationUserRestrictedResponse> registeredUsers;
+@AllArgsConstructor
+public class ApplicationUserRestrictedResponse {
+    private String username;
+    private String imageUrl;
 }

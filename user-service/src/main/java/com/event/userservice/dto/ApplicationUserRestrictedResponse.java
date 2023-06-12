@@ -16,7 +16,7 @@ public class ApplicationUserRestrictedResponse {
     public static ApplicationUserRestrictedResponse fromApplicationUser(ApplicationUsers user) {
         return ApplicationUserRestrictedResponse.builder()
                 .username(user.getUsername())
-                .imageUrl("/api/v1/users/profile-image/" + user.getUsername())
+                .imageUrl("/api/v1/users/profile-img/" + user.getUsername())
                 .build();
     }
 }

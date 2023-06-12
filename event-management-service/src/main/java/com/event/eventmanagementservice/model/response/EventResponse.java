@@ -33,7 +33,7 @@ public class EventResponse {
 				.registerDueDate(event.getRegisterDueDate())
 				.userLimit(event.getUserLimit())
 				.organizatorUsername(event.getOrganizatorUsername())
-				.imageUrl("/api/v1/event-management/event-img/" + event.getId())
+				.imageUrl("/api/v1/event-management/get-event-image/" + event.getId())
 				.build();
 	}
 }

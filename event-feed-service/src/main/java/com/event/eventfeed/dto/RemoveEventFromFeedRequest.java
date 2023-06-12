@@ -6,17 +6,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class EventResponseRestricted {
-    private String name;
-    private LocalDateTime startDate;
+public class RemoveEventFromFeedRequest {
     private String uuid;
-    private String imageUrl;
-
-
+    private String username;
 }

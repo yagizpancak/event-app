@@ -2,6 +2,9 @@ package com.event.eventfeed.api;
 
 
 import com.event.eventfeed.dto.EventsInfoRestricted;
+import com.event.eventfeed.dto.RemoveEventFromFeedRequest;
+import com.event.eventfeed.dto.SimpleIsSuccessResponse;
+import com.event.eventfeed.exception.UserNotFoundException;
 import com.event.eventfeed.service.EventFeedService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -31,6 +34,14 @@ public class EventFeedController {
     @PostMapping("/add-user/{username}")
     public void addUser(@PathVariable String username){
         service.addUser(username);
+    }
+
+    @PutMapping("/remove-event-from-feed")
+    public SimpleIsSuccessResponse removeEventFromFeed(@RequestBody RemoveEventFromFeedRequest removeEventFromFeedRequest) throws UserNotFoundException {
+        return SimpleIsSuccessResponse.builder()
+                .isSuccess(service.removeEventFromFeed(removeEventFromFeedRequest))
+                .build();
+
     }
 
 }

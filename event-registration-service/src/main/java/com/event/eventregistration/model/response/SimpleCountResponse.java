@@ -6,12 +6,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class RegisteredUsersResponse {
-    private List<ApplicationUserRestrictedResponse> registeredUsers;
+public class SimpleCountResponse {
+    private Integer count;
 }

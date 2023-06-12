@@ -1,5 +1,4 @@
-package com.event.eventregistration.model.response;
-
+package com.event.eventregistration.model.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,6 +11,6 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class RegisteredUsersResponse {
-    private List<ApplicationUserRestrictedResponse> registeredUsers;
+public class GetEventsRequest {
+	private List<String> idList;
 }

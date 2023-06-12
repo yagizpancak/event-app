@@ -31,5 +31,9 @@ public interface EventRepository extends JpaRepository<Event, String> {
 
 	List<Event> findByIdInAndStartDateAfter(List<String> ids, LocalDateTime startDate);
 
+	List<Event> findByIdInAndStartDateBefore(List<String> ids, LocalDateTime endDate);
+
+	List<Event> findByStartDateAfterOrderByStartDateAsc(LocalDateTime startDate);
+
 
 }

@@ -2,12 +2,15 @@ package com.event.eventfeed.service;
 
 
 import com.event.eventfeed.dto.*;
+import com.event.eventfeed.exception.UserNotFoundException;
 import com.event.eventfeed.model.Feed;
 import com.event.eventfeed.repo.FeedRepository;
+import jdk.jfr.Timespan;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -49,7 +52,10 @@ public class EventFeedService {
 
     public List<String> getFeeds(String username){
         var feedOptional  = feedRepository.findByUsername(username);
-        return feedOptional.map(Feed::getFeedEvents).orElse(null);
+        if(feedOptional.isPresent()){
+            return feedOptional.get().getFeedEvents();
+        }
+        return new ArrayList<>();
     }
 
     @KafkaListener(topics = "createdEvents")
@@ -77,10 +83,29 @@ public class EventFeedService {
                     .build());
     }
 
+
+    @Transactional
+    public boolean removeEventFromFeed(RemoveEventFromFeedRequest removeEventFromFeedRequest) throws UserNotFoundException {
+        String eventUUID = removeEventFromFeedRequest.getUuid();
+        String username = removeEventFromFeedRequest.getUsername();
+        var feed = feedRepository.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("User not found with this username: " + username));
+        List<String> feedEventsUpdated = new ArrayList<>();
+        List<String> feedEventsOld = feed.getFeedEvents();
+        for(String eventUUIDOld : feedEventsOld){
+            if(!eventUUIDOld.equals(eventUUID)){
+                feedEventsUpdated.add(eventUUIDOld);
+            }
+        }
+        feed.setFeedEvents(feedEventsUpdated);
+        mongoTemplate.insert(feed);
+        return true;
+
     @KafkaListener(topics = "followUser")
     public void kafkaDeneme(KafkaTopic kafkaTopic){
         //TODO
         System.out.println(kafkaTopic.getFollower());
         System.out.println(kafkaTopic.getFollowee());
+
     }
 }
