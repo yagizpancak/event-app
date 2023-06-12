@@ -5,7 +5,6 @@ import com.event.eventfeed.dto.*;
 import com.event.eventfeed.exception.UserNotFoundException;
 import com.event.eventfeed.model.Feed;
 import com.event.eventfeed.repo.FeedRepository;
-import jdk.jfr.Timespan;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -92,20 +91,40 @@ public class EventFeedService {
                 .orElseThrow(() -> new UserNotFoundException("User not found with this username: " + username));
         List<String> feedEventsUpdated = new ArrayList<>();
         List<String> feedEventsOld = feed.getFeedEvents();
-        for(String eventUUIDOld : feedEventsOld){
-            if(!eventUUIDOld.equals(eventUUID)){
+        for (String eventUUIDOld : feedEventsOld) {
+            if (!eventUUIDOld.equals(eventUUID)) {
                 feedEventsUpdated.add(eventUUIDOld);
             }
         }
         feed.setFeedEvents(feedEventsUpdated);
         mongoTemplate.insert(feed);
         return true;
+    }
 
     @KafkaListener(topics = "followUser")
-    public void kafkaDeneme(KafkaTopic kafkaTopic){
-        //TODO
-        System.out.println(kafkaTopic.getFollower());
-        System.out.println(kafkaTopic.getFollowee());
+    public void kafkaDeneme(KafkaTopic kafkaTopic) throws UserNotFoundException {
+        String follower = kafkaTopic.getFollower();
+        String followee = kafkaTopic.getFollowee();
+        var response = webClientBuilder.build().get()
+                .uri(uriBuilder -> uriBuilder
+                        .scheme("http")
+                        .host("event-management-service")
+                        .path("/api/v1/event-management/get-by-organizator/"+followee)
+                        .build())
+                .retrieve()
+                .bodyToMono(EventsInfoRestrictedWithDueInfo.class)
+                .block();
 
+        List<String> followeeEvents = response.getEvents().stream().filter((event) -> !event.isClosed()).
+                map(EventResponseRestrictedWithDueInfo::getEventUUID).toList();
+        var followerFeed = feedRepository.findByUsername(follower).orElseThrow(() ->new UserNotFoundException("User not found with this username"+ follower));
+
+        List<String> updatedEvents = new ArrayList<>();
+        List<String> oldEvents = followerFeed.getFeedEvents();
+        for (String newEvent: updatedEvents){
+            oldEvents.add(newEvent);
+        }
+        followerFeed.setFeedEvents(updatedEvents);
+        feedRepository.insert(followerFeed);
     }
 }
